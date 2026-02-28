@@ -1,65 +1,28 @@
-"""
-Emotion Detection Module
-"""
-
-import requests
-import json
-
-
-def emotion_detector(text_to_analyze):
+@app.route("/emotionDetector")
+def emotion_detection_route():
     """
-    Analyze emotion of provided text and return formatted output.
-
-    Args:
-        text_to_analyze (str): Text that needs to be analyzed.
-
-    Returns:
-        dict: Formatted dictionary with emotion scores and dominant emotion.
+    Handle emotion detection requests from the frontend.
     """
+    text_to_analyze = request.args.get("textToAnalyze")
 
-    url = (
-        "https://sn-watson-emotion.labs.skills.network/"
-        "v1/watson.runtime.nlp.v1/NlpService/EmotionPredict"
+    response = emotion_detector(text_to_analyze)
+
+    dominant_emotion = response["dominant_emotion"]
+
+    # ✅ Handle invalid or blank input
+    if dominant_emotion is None:
+        return "Invalid text! Please try again!"
+
+    anger = response["anger"]
+    disgust = response["disgust"]
+    fear = response["fear"]
+    joy = response["joy"]
+    sadness = response["sadness"]
+
+    return (
+        f"For the given statement, the system response is "
+        f"'anger': {anger}, 'disgust': {disgust}, "
+        f"'fear': {fear}, 'joy': {joy} and "
+        f"'sadness': {sadness}. "
+        f"The dominant emotion is {dominant_emotion}."
     )
-
-    headers = {
-        "grpc-metadata-mm-model-id":
-        "emotion_aggregated-workflow_lang_en_stock"
-    }
-
-    input_json = {
-        "raw_document": {
-            "text": text_to_analyze
-        }
-    }
-
-    response = requests.post(url, headers=headers, json=input_json)
-
-    response_dict = json.loads(response.text)
-
-    emotions = response_dict["emotionPredictions"][0]["emotion"]
-
-    anger = emotions["anger"]
-    disgust = emotions["disgust"]
-    fear = emotions["fear"]
-    joy = emotions["joy"]
-    sadness = emotions["sadness"]
-
-    emotion_scores = {
-        "anger": anger,
-        "disgust": disgust,
-        "fear": fear,
-        "joy": joy,
-        "sadness": sadness
-    }
-
-    dominant_emotion = max(emotion_scores, key=emotion_scores.get)
-
-    return {
-        "anger": anger,
-        "disgust": disgust,
-        "fear": fear,
-        "joy": joy,
-        "sadness": sadness,
-        "dominant_emotion": dominant_emotion
-    }
